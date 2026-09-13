@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bbw-upc-scanner-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://frontend:3000
+      - BBW_MIN_REQUEST_INTERVAL=2.5
+      - BBW_PRODUCT_CACHE_TTL=300
+      - SESSION_TTL_SECONDS=86400
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/app:/app/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - bbw-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bbw-upc-scanner-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - bbw-network
+    restart: unless-stopped
+
+networks:
+  bbw-network:
+    driver: bridge
+
+volumes:
+  sessions-data:
+    driver: local
