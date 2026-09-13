@@ -41,10 +41,22 @@ click the extension's toolbar icon and update the URL there.
 1. Start the backend and frontend as described in the root
    [`README.md`](../README.md).
 2. Browse to any product page on bathandbodyworks.com, e.g.
-   `https://www.bathandbodyworks.com/p/...`.
+   `https://www.bathandbodyworks.com/p/...` — whether you land there via a
+   direct link/typed URL or by clicking through from search/category
+   results within the site.
 3. Click **📥 Send to Price Tracker**.
 4. Your Price Tracker tab is focused (or opened) automatically with the
    captured product ready to add.
+
+> **If the button doesn't appear**: bathandbodyworks.com is a client-side
+> React app, so the extension watches for both real page loads and
+> in-app (History API) navigation to show/hide the button as you browse —
+> no manual refresh should be needed. If it's still missing, open the
+> page's console and run `typeof window.BBWCapture` — `"object"` means
+> the content script loaded and something else is off (check
+> `chrome://extensions` for a load error); `"undefined"` means the
+> content script itself never ran (confirm the extension is enabled and
+> try reloading the page).
 
 ## Files
 
@@ -52,21 +64,28 @@ click the extension's toolbar icon and update the URL there.
 |---|---|
 | `manifest.json` | Manifest V3 config: permissions, content scripts, background worker |
 | `content/extract.js` | Pure DOM-extraction logic (JSON-LD first, CSS-selector fallbacks) — mirrors `backend/app/scraper/bbw_scraper.py`'s approach |
-| `content/bbw_capture.js` | Injects the capture button on BBW product pages, wires it to `extract.js` |
+| `content/bbw_capture.js` | Injects the capture button on BBW product pages, wires it to `extract.js`; also watches for client-side (SPA) navigation |
 | `content/tracker_bridge.js` | Runs on the tracker frontend; relays a pending capture into the page via `postMessage` |
 | `background.js` | Service worker: stores the captured product, focuses/opens the tracker tab |
 | `popup.html` / `popup.js` | Toolbar popup for setting the tracker URL |
 
 ## Tests
 
-`tests/test_extract.js` loads `tests/fixtures/product_page.html` (the same
-JSON-LD fixture used in the backend's parser test, for parity) in a real
-browser and checks `extract.js`'s output against expected values:
-
 ```bash
 npm install --no-save playwright   # if not already available
 node tests/test_extract.js
+node tests/test_spa_navigation.js
 ```
+
+- `test_extract.js` loads `fixtures/product_page.html` (the same JSON-LD
+  fixture used in the backend's parser test, for parity) in a real browser
+  and checks `extract.js`'s output against expected values.
+- `test_spa_navigation.js` serves `fixtures/spa_shell_server.html` over a
+  local HTTP server and confirms the button appears/disappears correctly
+  across simulated client-side (History API) navigation and browser
+  back/forward — the exact scenario that originally made the button not
+  show up when navigating within the site instead of loading a product
+  page directly.
 
 ## Notes
 

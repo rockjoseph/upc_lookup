@@ -14,7 +14,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.bathandbodyworks.com/p/*"],
+      "matches": ["https://www.bathandbodyworks.com/*"],
       "js": ["content/extract.js", "content/bbw_capture.js"],
       "run_at": "document_idle"
     },
