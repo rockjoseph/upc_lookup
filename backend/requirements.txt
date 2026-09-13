@@ -6,7 +6,20 @@ openpyxl==3.1.5
 python-multipart==0.0.9
 pydantic==2.7.4
 
-# Optional: enables JS-rendered page fallback for products that don't expose
-# JSON-LD / static HTML data. Install separately if needed:
+# Optional: enables the JS-rendered fallback in app/scraper/fetch_html()
+# for pages that don't expose JSON-LD / static HTML data, or that a static
+# request gets a bot-detection challenge page for. Install separately if
+# needed:
 #   pip install playwright && playwright install chromium
 # playwright==1.44.0
+#
+# NOTE: bathandbodyworks.com fronts its search endpoint with a dedicated
+# bot-management vendor (HUMAN Security / PerimeterX -- look for
+# "px-captcha" or "Human BD" in a blocked response's body/reason phrase).
+# That system is specifically designed to detect headless browsers too, so
+# installing Playwright is not guaranteed to get past it. If it still
+# returns a challenge page even with Playwright enabled, that's the site
+# deliberately blocking automated access -- see the "Anti-bot" section in
+# docs/ARCHITECTURE.md for what to do instead (manual entry, or a
+# browser-extension-based capture that runs in your own logged-in browser
+# session rather than as a script).
