@@ -1,4 +1,4 @@
-# BBW Price Tracker
+# BBW Price Tracker 1
 
 A lightweight full-stack app for looking up Bath & Body Works product prices
 (by URL, UPC/barcode, or name) and syncing the results into an Excel
