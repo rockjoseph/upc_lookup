@@ -19,15 +19,26 @@ USER_AGENTS = [
 ]
 
 DEFAULT_HEADERS_EXTRA = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
     "Connection": "keep-alive",
     "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Ch-Ua": '"Google Chrome";v="124", "Chromium";v="124", ";Not A Brand";v="99"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Cache-Control": "max-age=0",
+    "Pragma": "no-cache",
 }
 
 # Minimum number of seconds between outbound requests to bathandbodyworks.com.
 # Keeps the tool polite / low-volume rather than hammering the origin.
-MIN_REQUEST_INTERVAL_SECONDS = float(os.getenv("BBW_MIN_REQUEST_INTERVAL", "2.5"))
+# Note: BBW has aggressive bot detection. Values < 5.0 are often detected as bots.
+# For reliable scraping, set to 10.0 or higher. Can be overridden via BBW_MIN_REQUEST_INTERVAL.
+MIN_REQUEST_INTERVAL_SECONDS = float(os.getenv("BBW_MIN_REQUEST_INTERVAL", "10.0"))
 
 # How long a successfully scraped product page is cached in memory before
 # we're willing to re-fetch it.
