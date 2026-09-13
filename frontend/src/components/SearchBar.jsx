@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const QUERY_TYPES = [
   { value: "auto", label: "Auto-detect" },
@@ -10,21 +10,31 @@ const QUERY_TYPES = [
 export default function SearchBar({ onSearch, loading }) {
   const [query, setQuery] = useState("");
   const [queryType, setQueryType] = useState("auto");
+  const inputRef = useRef(null);
+
+  // Auto-focus the search input on component mount
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   function handleSubmit(e) {
     e.preventDefault();
     if (!query.trim()) return;
     onSearch(query.trim(), queryType);
+    // Clear input after search for next quick entry
+    setQuery("");
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 w-full">
       <input
+        ref={inputRef}
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Paste a product URL, UPC/barcode, or type a product name..."
         className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+        autoComplete="off"
       />
       <select
         value={queryType}
