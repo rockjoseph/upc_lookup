@@ -35,6 +35,26 @@ export default function App() {
       .catch((err) => setError(err.message));
   }, []);
 
+  // Receive a product captured by the optional browser extension (see
+  // extension/). It posts { __bbwPriceTrackerCapture: true, product } into
+  // this page once you click "Send to Price Tracker" on a real BBW product
+  // page in your own browser -- this is a manual, same-origin postMessage,
+  // not a network response, so it's rendered exactly like a normal search
+  // result and goes through the same Add-to-Excel flow.
+  useEffect(() => {
+    function handleExtensionMessage(event) {
+      if (event.source !== window) return;
+      const data = event.data;
+      if (!data || data.__bbwPriceTrackerCapture !== true || !data.product) return;
+      setProduct(data.product);
+      setCandidates([]);
+      setError(null);
+      setJustAdded(false);
+    }
+    window.addEventListener("message", handleExtensionMessage);
+    return () => window.removeEventListener("message", handleExtensionMessage);
+  }, []);
+
   async function handleSearch(query, queryType) {
     setSearching(true);
     setError(null);

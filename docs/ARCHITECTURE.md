@@ -53,6 +53,15 @@ upc_lookup/
 │   │       ├── CandidateList.jsx
 │   │       └── ExcelPanel.jsx
 │   └── package.json
+├── extension/                        # Optional browser-extension capture path
+│   ├── manifest.json                 # Manifest V3 config
+│   ├── background.js                 # Service worker: stores capture, opens/focuses tracker tab
+│   ├── popup.html / popup.js         # Toolbar popup: set the tracker URL
+│   ├── content/
+│   │   ├── extract.js                # DOM extraction (mirrors bbw_scraper.py's approach)
+│   │   ├── bbw_capture.js            # Injects capture button on BBW product pages
+│   │   └── tracker_bridge.js         # Relays a capture into the tracker page via postMessage
+│   └── tests/test_extract.js         # Playwright test against a fixture page
 └── docs/ARCHITECTURE.md
 ```
 
@@ -128,11 +137,16 @@ circumventing anything:
 
 1. **Manual entry**: browse the site yourself in a normal browser, and use
    this app purely for the Excel matching/upsert/download logic (already
-   fully self-contained and working without any scraping).
-2. **Browser-extension capture**: a small extension that reads product
-   data from the page while you browse normally (your own authenticated
-   session) and posts it to this backend — legitimate because it's your
-   own browser and no automated request is made to the site at all.
+   fully self-contained and working without any scraping) — just type the
+   name/price/promo you see into the search bar's result, or extend the UI
+   with a manual-entry form if that's a common enough case for you.
+2. **Browser-extension capture** (built — see [`extension/`](../extension/)):
+   a small extension that reads product data from the page while you
+   browse normally (your own authenticated session) and delivers it into
+   the frontend via `postMessage` — legitimate because it's your own
+   browser rendering the page as normal, and no automated request is made
+   to the site at all. This is the recommended path when the scraper hits
+   the bot-management wall described above.
 
 Please use this tool for personal price-tracking only, at a low request
 volume, and in a way that's consistent with bathandbodyworks.com's Terms

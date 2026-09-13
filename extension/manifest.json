@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "BBW Price Tracker Capture",
+  "version": "1.0.0",
+  "description": "Capture Bath & Body Works product details while you browse normally and send them to your local Price Tracker app.",
+  "permissions": ["storage", "tabs", "scripting"],
+  "host_permissions": [
+    "https://www.bathandbodyworks.com/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.bathandbodyworks.com/p/*"],
+      "js": ["content/extract.js", "content/bbw_capture.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["content/tracker_bridge.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "BBW Price Tracker Capture"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
