@@ -60,9 +60,24 @@ class ScraperError(Exception):
 
 
 def _headers() -> dict:
+    """Generate headers that mimic a real browser more closely.
+
+    PerimeterX bot detection looks for missing or unusual headers,
+    inconsistent user agents, and other fingerprinting techniques.
+    """
     headers = {"User-Agent": random.choice(USER_AGENTS)}
     headers.update(DEFAULT_HEADERS_EXTRA)
-    headers["Referer"] = BBW_BASE_URL + "/"
+
+    # Vary referrer to look more natural (sometimes from home, sometimes from search, sometimes from product pages)
+    referrer_choice = random.random()
+    if referrer_choice < 0.5:
+        headers["Referer"] = BBW_BASE_URL + "/"
+    elif referrer_choice < 0.85:
+        headers["Referer"] = BBW_BASE_URL + "/search"
+    else:
+        # Sometimes come from Google search
+        headers["Referer"] = "https://www.google.com/"
+
     return headers
 
 
