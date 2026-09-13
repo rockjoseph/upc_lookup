@@ -5,8 +5,10 @@ export default function BarcodeScanner({ onScan, onError, disabled }) {
   const [isActive, setIsActive] = useState(false);
   const [lastScannedValue, setLastScannedValue] = useState("");
   const [cameraPermission, setCameraPermission] = useState(null);
+  const [manualInput, setManualInput] = useState("");
   const scannerRef = useRef(null);
   const html5QrcodeScannerRef = useRef(null);
+  const manualInputRef = useRef(null);
 
   // Initialize the barcode scanner
   useEffect(() => {
@@ -84,6 +86,15 @@ export default function BarcodeScanner({ onScan, onError, disabled }) {
     };
   }, [isActive, lastScannedValue, onScan, onError]);
 
+  function handleManualSubmit(e) {
+    e.preventDefault();
+    if (!manualInput.trim()) return;
+
+    onScan(manualInput.trim());
+    setManualInput("");
+    manualInputRef.current?.focus();
+  }
+
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -129,9 +140,35 @@ export default function BarcodeScanner({ onScan, onError, disabled }) {
       )}
 
       {!isActive && cameraPermission !== false && (
-        <div className="bg-gray-50 rounded-lg border border-gray-200 p-8 text-center">
-          <div className="text-4xl mb-2">📷</div>
-          <p className="text-gray-600 text-sm">Camera scanner is ready. Click "Start Scanner" to begin.</p>
+        <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
+          <div className="text-center mb-6">
+            <div className="text-4xl mb-2">📷</div>
+            <p className="text-gray-600 text-sm">Camera scanner is ready. Click "Start Scanner" to begin.</p>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6">
+            <p className="text-sm font-medium text-gray-700 mb-3">Or enter a barcode manually:</p>
+            <form onSubmit={handleManualSubmit} className="flex gap-2">
+              <input
+                ref={manualInputRef}
+                type="text"
+                value={manualInput}
+                onChange={(e) => setManualInput(e.target.value)}
+                placeholder="Paste or type barcode number..."
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                autoComplete="off"
+                disabled={disabled}
+              />
+              <button
+                type="submit"
+                disabled={disabled || !manualInput.trim()}
+                className="rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Search
+              </button>
+            </form>
+            <p className="text-xs text-gray-500 mt-2">EAN-13, UPC, or any barcode format</p>
+          </div>
         </div>
       )}
     </div>
