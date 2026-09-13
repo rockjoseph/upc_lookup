@@ -1,0 +1,12 @@
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+requests==2.32.3
+beautifulsoup4==4.12.3
+openpyxl==3.1.5
+python-multipart==0.0.9
+pydantic==2.7.4
+
+# Optional: enables JS-rendered page fallback for products that don't expose
+# JSON-LD / static HTML data. Install separately if needed:
+#   pip install playwright && playwright install chromium
+# playwright==1.44.0
