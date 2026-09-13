@@ -7,6 +7,7 @@ import {
   updateExcel,
   uploadExcel,
 } from "./api";
+import BarcodeScanner from "./components/BarcodeScanner";
 import CandidateList from "./components/CandidateList";
 import ExcelPanel from "./components/ExcelPanel";
 import ProductCard from "./components/ProductCard";
@@ -110,6 +111,11 @@ export default function App() {
     }
   }
 
+  function handleBarcodeScanned(barcode) {
+    // When a barcode is scanned, search for it as a UPC
+    handleSearch(barcode, "upc");
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200">
@@ -122,6 +128,12 @@ export default function App() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-6">
+        <BarcodeScanner
+          onScan={handleBarcodeScanned}
+          onError={setError}
+          disabled={searching}
+        />
+
         <SearchBar onSearch={handleSearch} loading={searching} />
 
         {error && (
