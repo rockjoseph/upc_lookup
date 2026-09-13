@@ -8,9 +8,21 @@ download the updated `.xlsx`.
 - **Backend**: Python + FastAPI, `requests`/BeautifulSoup scraper (optional
   Playwright fallback for JS-rendered pages), `openpyxl` for Excel I/O.
 - **Frontend**: React (Vite) + Tailwind CSS.
+- **Browser extension** (`extension/`): an alternative, always-works way to
+  get product data in — captures it from a page you're already viewing in
+  your own browser instead of scraping. See
+  [`extension/README.md`](extension/README.md).
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full file tree,
 data flow, and scraping/rate-limiting design.
+
+> **Heads up on scraping**: bathandbodyworks.com fronts its search endpoint
+> with a dedicated bot-management vendor (HUMAN Security / PerimeterX) that
+> also targets headless browsers, so automated search/lookup may get
+> blocked outright regardless of the Playwright fallback. If that happens,
+> use the browser extension instead (or paste a direct product URL, which
+> has a better chance of resolving than a keyword/UPC search). See the
+> "Anti-bot" section of `docs/ARCHITECTURE.md` for details.
 
 ## Features
 

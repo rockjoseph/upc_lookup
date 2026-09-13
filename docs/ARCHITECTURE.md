@@ -53,6 +53,15 @@ upc_lookup/
 │   │       ├── CandidateList.jsx
 │   │       └── ExcelPanel.jsx
 │   └── package.json
+├── extension/                        # Optional browser-extension capture path
+│   ├── manifest.json                 # Manifest V3 config
+│   ├── background.js                 # Service worker: stores capture, opens/focuses tracker tab
+│   ├── popup.html / popup.js         # Toolbar popup: set the tracker URL
+│   ├── content/
+│   │   ├── extract.js                # DOM extraction (mirrors bbw_scraper.py's approach)
+│   │   ├── bbw_capture.js            # Injects capture button on BBW product pages
+│   │   └── tracker_bridge.js         # Relays a capture into the tracker page via postMessage
+│   └── tests/test_extract.js         # Playwright test against a fixture page
 └── docs/ARCHITECTURE.md
 ```
 
@@ -95,12 +104,49 @@ deliberately polite rather than aggressive:
   browser would send — this is not an attempt to defeat bot detection or
   CAPTCHAs, just to avoid being trivially misidentified as a non-browser
   client.
-- On `403`/`429`/`503` responses the client retries a bounded number of
-  times with exponential backoff, then gives up and surfaces a clear error
-  rather than looping indefinitely.
-- An optional Playwright fallback (not installed by default) can render
-  JS-heavy pages if the static HTML path finds nothing — see
-  `app/scraper/playwright_fallback.py`.
+- On any non-200 response the client retries a bounded number of times
+  with exponential backoff, then gives up and surfaces the real status
+  code/reason/body snippet rather than a vague error.
+- `fetch_html()` also sniffs the response body for known bot-management
+  challenge-page signatures (see `BOT_CHALLENGE_MARKERS` in
+  `bbw_scraper.py`) since these are sometimes served with an
+  otherwise-normal status code. When one is detected, it falls back once
+  to a JS-rendered fetch via Playwright (`app/scraper/playwright_fallback.py`,
+  optional dependency) before giving up.
+
+### When the site's bot-management blocks automated access outright
+
+In practice, `bathandbodyworks.com/search` is fronted by a dedicated
+bot-management vendor (HUMAN Security / PerimeterX — its challenge pages
+mention "px-captcha" and the response reason phrase reads "Human BD
+Forbidden"). That system is purpose-built to also fingerprint and block
+headless browsers (checks like `navigator.webdriver`, canvas/WebGL
+fingerprints, missing plugins, CDP artifacts), so enabling the Playwright
+fallback is not guaranteed to get through it — and if it still returns a
+challenge page with JS rendering enabled, `fetch_html()` raises a clear
+"blocking automated access outright" error rather than silently retrying
+forever.
+
+That's an intentional stopping point, not a bug to route around: at that
+point the site has a dedicated control in place specifically to block
+programmatic access, and defeating it would mean stealth-patching the
+browser's fingerprint, solving CAPTCHAs, or rotating IPs — techniques for
+evading a security control rather than polite scraping, which this project
+won't build. If you hit that wall, two options that don't involve
+circumventing anything:
+
+1. **Manual entry**: browse the site yourself in a normal browser, and use
+   this app purely for the Excel matching/upsert/download logic (already
+   fully self-contained and working without any scraping) — just type the
+   name/price/promo you see into the search bar's result, or extend the UI
+   with a manual-entry form if that's a common enough case for you.
+2. **Browser-extension capture** (built — see [`extension/`](../extension/)):
+   a small extension that reads product data from the page while you
+   browse normally (your own authenticated session) and delivers it into
+   the frontend via `postMessage` — legitimate because it's your own
+   browser rendering the page as normal, and no automated request is made
+   to the site at all. This is the recommended path when the scraper hits
+   the bot-management wall described above.
 
 Please use this tool for personal price-tracking only, at a low request
 volume, and in a way that's consistent with bathandbodyworks.com's Terms

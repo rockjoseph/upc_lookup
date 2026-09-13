@@ -102,13 +102,75 @@ def _get(url: str) -> requests.Response:
     raise ScraperError(f"Failed to fetch {url} after {MAX_RETRIES} attempts: {last_exc}")
 
 
-def fetch_html(url: str) -> str:
+# Signatures that show up in bot-management challenge/CAPTCHA pages (e.g.
+# HUMAN Security / PerimeterX "px-captcha", Akamai, Cloudflare, etc). These
+# pages are often served with a normal-looking status code (even a 2xx), so
+# a status check alone isn't enough -- we also sniff the body.
+BOT_CHALLENGE_MARKERS = (
+    "px-captcha",
+    "perimeterx",
+    "human bd",
+    "please verify you are a human",
+    "are you a human",
+    "captcha-delivery.com",
+)
+
+
+def _looks_like_bot_challenge(html: str) -> bool:
+    lowered = html[:3000].lower()
+    return any(marker in lowered for marker in BOT_CHALLENGE_MARKERS)
+
+
+def fetch_html(url: str, allow_js_fallback: bool = True) -> str:
+    """Fetch a page's HTML, preferring a plain static request and falling
+    back to a JS-rendered (Playwright) fetch if the static request is
+    blocked or served a bot-detection challenge page instead of real
+    content. Raises ScraperError with a clear reason if both paths fail or
+    both are blocked -- callers should not have to guess why."""
     cached = _page_cache.get(url)
     if cached is not None:
         return cached
-    resp = _get(url)
-    _page_cache.set(url, resp.text)
-    return resp.text
+
+    try:
+        html = _get(url).text
+        if _looks_like_bot_challenge(html):
+            raise ScraperError(
+                f"Bot-detection challenge page returned for {url} (the HTTP "
+                "status looked fine, but the body is a CAPTCHA/challenge "
+                "page rather than real content)."
+            )
+    except ScraperError as static_exc:
+        if not allow_js_fallback:
+            raise
+        logger.info(
+            "Static fetch failed/blocked for %s (%s); trying Playwright fallback",
+            url,
+            static_exc,
+        )
+        from app.scraper.playwright_fallback import render_html
+
+        try:
+            html = render_html(url)
+        except RuntimeError:
+            # Playwright isn't installed -- surface the original error
+            # rather than a confusing "not installed" message when the
+            # caller never opted into the JS fallback in the first place.
+            raise static_exc
+        except Exception as fallback_exc:  # noqa: BLE001
+            raise ScraperError(
+                f"Both static and JS-rendered scraping failed for {url}: {fallback_exc}"
+            ) from fallback_exc
+
+        if _looks_like_bot_challenge(html):
+            raise ScraperError(
+                f"Bot-detection challenge page returned for {url} even after "
+                "JS rendering via Playwright -- this site's bot-management "
+                "system is blocking automated access outright, not just "
+                "flagging simple/static requests."
+            )
+
+    _page_cache.set(url, html)
+    return html
 
 
 def _extract_json_ld_product(soup: BeautifulSoup) -> Optional[dict]:

@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>BBW Price Tracker Capture</title>
+    <style>
+      body {
+        width: 280px;
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 16px;
+        color: #1f2937;
+      }
+      h1 {
+        font-size: 14px;
+        margin: 0 0 8px;
+      }
+      p {
+        font-size: 12px;
+        color: #6b7280;
+        line-height: 1.4;
+        margin: 0 0 12px;
+      }
+      label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #374151;
+        display: block;
+        margin-bottom: 4px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        font-size: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        margin-bottom: 8px;
+      }
+      button {
+        width: 100%;
+        padding: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+        background: #db2777;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      #status {
+        font-size: 11px;
+        color: #059669;
+        margin-top: 8px;
+        min-height: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧴 BBW Price Tracker Capture</h1>
+    <p>
+      Browse to a product page on bathandbodyworks.com and click
+      "Send to Price Tracker" there. This popup just controls where
+      captures are delivered.
+    </p>
+    <label for="tracker-url">Price Tracker app URL</label>
+    <input id="tracker-url" type="text" placeholder="http://localhost:5173" />
+    <button id="save">Save</button>
+    <div id="status"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>
