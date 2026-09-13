@@ -19,6 +19,7 @@ import json
 import logging
 import random
 import re
+import time
 from typing import List, Optional
 
 import requests
@@ -79,21 +80,24 @@ def _get(url: str) -> requests.Response:
         else:
             if resp.status_code == 200:
                 return resp
-            if resp.status_code in (403, 429, 503):
-                # Likely throttled / bot-challenged. Back off and retry a
-                # limited number of times rather than hammering the origin.
-                logger.warning(
-                    "Got status %s for %s (attempt %s/%s)",
-                    resp.status_code,
-                    url,
-                    attempt,
-                    MAX_RETRIES,
-                )
-                last_exc = ScraperError(f"HTTP {resp.status_code} from {url}")
-            else:
-                resp.raise_for_status()
-        import time
-
+            # Any non-200 response (throttling, a bot-challenge page, an
+            # unexpected redirect, a real 4xx/5xx, ...) is recorded with
+            # enough detail to diagnose, then retried with backoff rather
+            # than either silently dropping the reason or raising an
+            # unrelated, uncaught exception via raise_for_status().
+            snippet = (resp.text or "")[:200].replace("\n", " ").strip()
+            last_exc = ScraperError(
+                f"HTTP {resp.status_code} {resp.reason} from {url}"
+                + (f" -- body starts: {snippet!r}" if snippet else "")
+            )
+            logger.warning(
+                "Got status %s for %s (attempt %s/%s): %s",
+                resp.status_code,
+                url,
+                attempt,
+                MAX_RETRIES,
+                snippet,
+            )
         time.sleep(RETRY_BACKOFF_BASE_SECONDS * attempt)
     raise ScraperError(f"Failed to fetch {url} after {MAX_RETRIES} attempts: {last_exc}")
 
