@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import SESSION_TTL_SECONDS
 from app.excel.excel_service import cleanup_expired_sessions
-from app.routers import excel, product
+from app.routers import excel, product, batch_lookup
 
 logging.basicConfig(level=logging.INFO)
 
@@ -28,6 +28,7 @@ app.add_middleware(
 
 app.include_router(product.router)
 app.include_router(excel.router)
+app.include_router(batch_lookup.router)
 
 
 @app.on_event("startup")

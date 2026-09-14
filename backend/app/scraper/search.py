@@ -1,11 +1,16 @@
 """High-level product resolution: turns a user query (URL, UPC, or keyword)
-into either a single Product or a list of candidates to disambiguate."""
+into either a single Product or a list of candidates to disambiguate.
+
+Now prioritizes Open Barcode API for UPC/EAN lookups to avoid bot detection.
+Falls back to BBW scraping for keyword searches and URLs.
+"""
 import logging
 from typing import List, Optional, Tuple
 
 from app.models import Product, ProductCandidate, QueryType
 from app.scraper import bbw_scraper
 from app.scraper.bbw_scraper import ScraperError
+from app.scraper import openbarcode_lookup
 
 logger = logging.getLogger("bbw_search")
 
@@ -44,6 +49,9 @@ def resolve_query(
     - `product` is set when we could resolve directly to a single item.
     - `candidates` is set when a keyword/UPC search returned multiple
       possible matches and the caller should let the user pick one.
+
+    For UPC codes, tries Open Barcode first to avoid bot detection.
+    Falls back to BBW search if needed.
     """
     query = query.strip()
     resolved_type = _detect_query_type(query) if query_type == QueryType.auto else query_type
@@ -51,7 +59,20 @@ def resolve_query(
     if resolved_type == QueryType.url:
         return _scrape_with_fallback(query), []
 
-    # UPC and keyword both go through the site search.
+    # For UPC codes, try Open Barcode first (avoids bot detection)
+    if resolved_type == QueryType.upc:
+        logger.info(f"Looking up UPC {query} in Open Barcode database...")
+        try:
+            product = openbarcode_lookup.lookup_by_upc(query)
+            if product:
+                logger.info(f"Found product in Open Barcode: {product.name}")
+                return product, []
+            else:
+                logger.info(f"UPC {query} not found in Open Barcode, trying BBW search...")
+        except Exception as e:
+            logger.warning(f"Open Barcode lookup failed: {e}, falling back to BBW search")
+
+    # UPC not found in Open Barcode or is a keyword search - use BBW site search
     candidates = bbw_scraper.search_products(query)
 
     if len(candidates) == 1:
